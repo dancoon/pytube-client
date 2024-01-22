@@ -35,13 +35,8 @@ jobs:
       - name: Publish to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          if [ -n "${{ secrets.PYPI_API_KEY }}" ]; then
             poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
             poetry publish --build
-          else
-            echo "PyPI_API_KEY secret not configured. Skipping PyPI release."
-            exit 1
-          fi
       - name: Create Github Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/create-release@v1
