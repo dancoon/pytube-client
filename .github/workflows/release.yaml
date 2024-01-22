@@ -1,1 +1,58 @@
+name: Release
 
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
+      - name: Add Poetry to Path
+        run: |
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Configure for Test PyPI
+        run: |
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
+
+      - name: Publish to Test PyPI
+        run: |
+          poetry publish --build -r testpypi
+
+      - name: Publish to PyPI
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          if [ -n "${{ secrets.PYPI_API_KEY }}" ]; then
+            poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+            poetry publish --build
+          else
+            echo "PyPI_API_KEY secret not configured. Skipping PyPI release."
+            exit 1
+          fi
+      - name: Create Github Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*

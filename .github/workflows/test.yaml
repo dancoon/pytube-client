@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.9, 3.10, 3.11, 3.12]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+
+      - name: Add Poetry to Path
+        run: |
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run tests
+        run: |
+          poetry run pytest
