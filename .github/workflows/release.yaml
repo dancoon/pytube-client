@@ -17,14 +17,12 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Install Poetry
+      - name: Install dependencies
         run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-
-      - name: Add Poetry to Path
-        run: |
-          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
-
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+    
       - name: Configure for Test PyPI
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
